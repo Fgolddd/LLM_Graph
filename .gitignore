@@ -1,0 +1,5 @@
+# 忽略 Python 缓存文件
+__pycache__/
+
+# 忽略 llm_graph 目录
+llm_graph/
