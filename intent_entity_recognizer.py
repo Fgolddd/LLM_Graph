@@ -1,48 +1,39 @@
 import json
-from typing import Dict, Any
 
-# 1. 导入 LLM 客户端的两个核心功能
+# 1. 导入编译好的 LangGraph 应用
 # ==============================================================================
-from llm_client import refine_query, get_structured_intent
+# app 实例封装了我们定义的所有节点和流程
+from graph_processor import app
 
-# 2. 主处理函数 (采用两步流程)
+# 2. 主处理函数 (现在调用 LangGraph 应用)
 # ==============================================================================
 
-def process_query(query: str) -> Dict[str, Any]:
+def process_query_with_graph(query: str):
     """
-    处理用户查询的完整流程：
-    1. 将模糊查询精炼为精确表达。
-    2. 从精确表达中提取结构化的意图和实体。
+    使用 LangGraph 应用处理用户查询。
     """
-    if not query:
-        return {"error": "查询不能为空。"}
-
-    # --- 步骤 1: 查询精炼 ---
-    print(f"[步骤 1] 正在精炼模糊查询...\n  原始查询: '{query}'")
-    refined_query = refine_query(query)
-    if "Error refining query" in refined_query or not refined_query:
-        return {"original_query": query, "error": refined_query or "精炼查询时返回为空。"}
-    print(f"  精确表达: '{refined_query}'")
-
-    # --- 步骤 2: 意图识别 ---
-    print(f"[步骤 2] 正在从精确表达中提取意图与实体...")
-    recognition_result = get_structured_intent(refined_query)
-
-    # --- 封装最终结果 ---
-    final_output = {
-        "original_query": query,
-        "refined_query": refined_query,
-        **recognition_result
+    # 定义图的初始输入
+    inputs = {"original_query": query}
+    
+    # 调用 invoke 方法来执行整个图的流程
+    # LangGraph 会自动在节点之间传递状态
+    final_state = app.invoke(inputs)
+    
+    # 从最终状态中提取所需信息进行格式化输出
+    output = {
+        "original_query": final_state.get("original_query"),
+        "refined_query": final_state.get("refined_query"),
+        "structured_intent": final_state.get("structured_intent"),
+        "error": final_state.get("error")
     }
 
-    return final_output
+    return output
 
 # 3. 示例用法
 # ==============================================================================
 if __name__ == '__main__':
-    # 在运行前，请确保您已经在 .env 文件中配置了 DASHSCOPE_API_KEY
+    # 在运行前，请确保您已配置好环境和 API 密钥
     
-    # 使用您提供的模糊查询作为测试用例
     fuzzy_queries = [
         "制作一张康美村涉毒警情分布图，只显示一类警情的具体点位",
         "我想知道铜陵镇涉毒场所的分布位置，在地图上显示",
@@ -51,7 +42,7 @@ if __name__ == '__main__':
 
     for i, query in enumerate(fuzzy_queries):
         print(f"--- 正在处理查询 {i+1} ---")
-        result = process_query(query)
+        result = process_query_with_graph(query)
         print("--- 最终结构化输出 ---")
         print(json.dumps(result, indent=2, ensure_ascii=False))
         print("\n" + "="*50 + "\n")
