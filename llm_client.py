@@ -7,8 +7,6 @@ from typing import Dict, Any
 # 从 prompts.py 模块中导入 Prompt 字符串
 from prompts import QUERY_REFINEMENT_PROMPT, INTENT_RECOGNITION_PROMPT
 
-# 加载 .env 文件中的环境变量
-load_dotenv()
 
 # 初始化客户端，适配 Qwen 模型服务
 # 建议从环境变量 `DASHSCOPE_API_KEY` 读取密钥，更安全
